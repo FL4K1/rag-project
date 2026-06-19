@@ -3,7 +3,6 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-.Python
 
 # Virtual environment
 venv/
@@ -13,10 +12,10 @@ env/
 # Streamlit
 .streamlit/
 
-# Vector store (auto-generated, can be large)
+# Vector store (auto-generated at runtime)
 embeddings/
 
-# Logs
+# Logs (runtime data)
 logs/
 
 # PDF data files (user-specific)

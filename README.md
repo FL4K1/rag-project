@@ -1,99 +1,145 @@
-# RAG Q&A System
+# 📚 RAG Q&A System
 
-This project is a complete end-to-end Retrieval-Augmented Generation (RAG) system built with Python. It allows users to query PDF documents and receive intelligent, context-aware answers. The system leverages hybrid search techniques, document reranking, and local Large Language Models (LLMs) to ensure high-quality responses.
+A production-ready **Retrieval-Augmented Generation (RAG)** system that lets you query PDF documents and receive intelligent, cited, structured answers. Built with Python, LangChain, ChromaDB, and Streamlit.
 
-## Features
+---
 
-- **Document Ingestion**: Seamlessly load and process PDF documents.
-- **Advanced Chunking**: Uses recursive character splitting to divide documents into manageable overlapping chunks.
-- **Hybrid Retrieval**: Combines semantic vector search (ChromaDB + HuggingFace Embeddings) with keyword-based search (BM25) for robust document retrieval.
-- **Cross-Encoder Reranking**: Refines and reranks retrieved documents using `ms-marco-MiniLM-L-6-v2` to ensure the most relevant context is fed to the LLM.
-- **Local LLM Integration**: Generates answers using Ollama with the `llama3` model, ensuring privacy and local execution.
-- **Interactive UI**: A user-friendly web interface built with Streamlit for uploading documents and asking questions.
-- **CLI Support**: A command-line interface is also available for quick terminal-based interactions.
+## ✨ Features
 
-## Architecture & Modules
+### Document Intelligence (Phase 2)
+- **Multi-PDF ingestion** — upload and index multiple PDFs simultaneously
+- **OCR fallback** — detects scanned/image-based pages and runs Tesseract OCR automatically
+- **Table extraction** — extracts PDF tables as Markdown via `pdfplumber` (no Java required)
+- **Hierarchical chunking** — parent→child chunking strategy preserves full context during retrieval
 
-The source code (`src/`) is organized into modular components:
+### Retrieval Pipeline
+- **Hybrid search** — combines ChromaDB vector search with BM25 keyword search
+- **Query expansion** — short queries are automatically expanded using the LLM
+- **Cross-encoder reranking** — `ms-marco-MiniLM-L-6-v2` reranks results for precision
+- **MMR diversity** — Maximal Marginal Relevance ensures non-redundant retrieved chunks
+- **Source filtering** — filter answers to specific uploaded documents
 
-- `app.py`: The Streamlit web application providing the user interface.
-- `main.py`: The Command Line Interface (CLI) application for terminal-based interactions.
-- `ingestion.py`: Handles loading documents (e.g., from PDF) using LangChain's `PyPDFLoader`.
-- `chunking.py`: Splits loaded documents into optimal chunks using `RecursiveCharacterTextSplitter`.
-- `embedding.py`: Generates vector embeddings for chunks using `ALL-MiniLM-L6-v2` and stores them in a local `Chroma` database (`embeddings/`).
-- `retrieval.py`: Implements the hybrid retrieval logic (Vector + BM25) and cross-encoder reranking.
-- `generator.py`: Constructs the prompt context and queries the local Ollama LLM (`llama3`) for the final answer.
+### LLM Generation
+- **Dual provider support** — switch between local Ollama and Google Gemini from the UI
+  - 🖥️ **Ollama** (local, private): `llama3.1:8b`, `llama3:8b`, `mistral:7b`
+  - ✨ **Gemini** (cloud, free tier): `gemini-2.0-flash`, `gemini-1.5-flash-latest`, `gemini-1.5-pro-latest`
+- **Streaming output** — token-by-token streaming for both providers
+- **Conversation memory** — retains last 5 exchanges for contextual follow-up questions
 
-## Prerequisites
+### Observability (Phase 3)
+- **RAG Triad evaluation** — per-answer scores for Context Relevance, Faithfulness, and Completeness
+- **Query logging** — every query/answer logged to `logs/rag_log.json` with latency and eval scores
+- **Answer latency** — end-to-end timing displayed per response
 
-- Python 3.8+
-- [Ollama](https://ollama.com/) installed and running locally with the `llama3` model pulled (`ollama run llama3`).
-- Required Python packages (see `requirement.txt`).
+### UI Features
+- **📋 Copy response** — one-click clipboard copy for every answer
+- **💾 Export chat** — download full conversation as `.txt`
+- **🗑️ Clear chat** — reset conversation history
+- **📎 Source citations** — file name + page number shown below every answer
+- **📁 Document stats** — shows page count, table count, OCR'd pages per upload
 
-## Installation
+---
 
-1. Clone or navigate to the project directory:
-   ```bash
-   cd RAG_Project
-   ```
+## 🗂️ Project Structure
 
-2. Create a virtual environment (optional but recommended):
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
-   ```
+```
+RAG_Project/
+├── src/
+│   ├── app.py               # Streamlit web UI
+│   ├── main.py              # CLI interface
+│   ├── config.py            # All configuration & feature flags
+│   ├── ingestion.py         # PDF loading + OCR fallback + table extraction
+│   ├── chunking.py          # Hierarchical parent→child chunking
+│   ├── embedding.py         # ChromaDB vector store creation
+│   ├── retrieval.py         # Hybrid search, MMR, reranking
+│   ├── query_expansion.py   # LLM-based query expansion
+│   ├── generator.py         # Ollama + Gemini answer generation
+│   ├── citations.py         # Source citation formatting
+│   ├── evaluator.py         # RAG Triad evaluation metrics
+│   ├── logger.py            # JSON-Lines query/answer logging
+│   ├── ocr.py               # Tesseract OCR for scanned PDFs
+│   └── table_extractor.py   # pdfplumber table → Markdown extraction
+├── data/                    # Place your PDF files here (gitignored)
+├── embeddings/              # ChromaDB vector store (auto-generated, gitignored)
+├── logs/                    # Query logs (auto-generated, gitignored)
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
 
-3. Install the dependencies:
-   ```bash
-   pip install -r requirement.txt
-   ```
+---
 
-   *Dependencies include:*
-   - `langchain`, `langchain-community`, `langchain-openai`, `langchain-text-splitters`
-   - `chromadb`
-   - `sentence-transformers`
-   - `rank_bm25` (Required for BM25 search, install if missing: `pip install rank_bm25`)
-   - `langchain-ollama` (Required for Ollama integration, install if missing: `pip install langchain-ollama`)
-   - `streamlit` (Required for the web app, install if missing: `pip install streamlit`)
+## 🚀 Quick Start
 
-## Usage
+### 1. Prerequisites
+- Python 3.10+
+- [Ollama](https://ollama.com/) (for local LLM) — or a free [Gemini API key](https://aistudio.google.com/app/apikey)
 
-Ensure you have a sample PDF document located at `data/sample.pdf` before running the application.
-
-### Streamlit Web Interface
-
-To launch the interactive web application:
-
+### 2. Install dependencies
 ```bash
+git clone https://github.com/FL4K1/rag-project.git
+cd rag-project
+python -m venv venv
+venv\Scripts\activate        # Windows
+pip install -r requirements.txt
+```
+
+### 3. Pull an Ollama model (if using local LLM)
+```bash
+ollama pull llama3.1:8b
+```
+
+### 4. Run the app
+```bash
+# Terminal 1 — start Ollama server (skip if using Gemini)
+ollama serve
+
+# Terminal 2 — launch the web app
 streamlit run src/app.py
 ```
-1. Open the provided local URL in your browser.
-2. Click "Load Documents" in the sidebar to process the PDF.
-3. Enter your questions in the main interface and receive answers along with the retrieved source documents.
 
-### Command Line Interface
+Open **http://localhost:8501** in your browser.
 
-To run the application in the terminal:
+---
 
-```bash
-python src/main.py
+## ⚙️ Configuration
+
+All settings live in [`src/config.py`](src/config.py):
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `llm_provider` | `"ollama"` | `"ollama"` or `"gemini"` |
+| `ollama_model` | `"llama3.1:8b"` | Ollama model name |
+| `gemini_model` | `"gemini-2.0-flash"` | Gemini model name |
+| `gemini_api_key` | `""` | Set here or enter in the sidebar UI |
+| `enable_ocr` | `True` | OCR for scanned PDF pages |
+| `enable_table_extraction` | `True` | Extract tables as Markdown |
+| `enable_logging` | `True` | Log queries to `logs/rag_log.json` |
+| `enable_eval_metrics` | `True` | Show RAG Triad scores per answer |
+| `enable_query_expansion` | `True` | Expand short queries using LLM |
+| `enable_streaming` | `True` | Stream tokens in real time |
+
+### Gemini API Key
+Get a **free** key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).  
+Enter it in the sidebar at runtime, or set it in `config.py`:
+```python
+gemini_api_key: str = "YOUR_KEY_HERE"
 ```
-The script will automatically load the documents, build the indexes, and start an interactive query loop where you can ask questions.
 
-## Directory Structure
+---
 
-```text
-RAG_Project/
-├── data/               # Directory for source documents (e.g., sample.pdf)
-├── embeddings/         # Persisted ChromaDB vector store
-├── src/                # Python source code
-│   ├── app.py          # Streamlit UI
-│   ├── chunking.py     # Document splitting
-│   ├── embedding.py    # Vector store creation
-│   ├── generator.py    # LLM answer generation
-│   ├── ingestion.py    # Document loading
-│   ├── main.py         # CLI application
-│   └── retrieval.py    # Hybrid search & reranking
-├── requirement.txt     # Python dependencies
-└── README.md           # Project documentation
-```
+## 📦 Key Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `langchain` + ecosystem | Core RAG orchestration |
+| `chromadb` | Vector store |
+| `sentence-transformers` | Embeddings (`all-MiniLM-L6-v2`) |
+| `rank_bm25` | BM25 keyword search |
+| `langchain-ollama` | Local LLM integration |
+| `langchain-google-genai` | Gemini API integration |
+| `pdfplumber` | Table extraction |
+| `pdf2image` + `pytesseract` | OCR for scanned PDFs |
+| `streamlit` | Web UI |
+
+> **Note:** OCR requires the [Tesseract binary](https://github.com/UB-Mannheim/tesseract/wiki) installed separately on Windows. Without it, OCR is gracefully skipped.
