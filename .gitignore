@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Streamlit
+.streamlit/
+
+# Vector store (auto-generated, can be large)
+embeddings/
+
+# Logs
+logs/
+
+# PDF data files (user-specific)
+data/
+
+# Environment / secrets
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

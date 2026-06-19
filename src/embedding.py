@@ -1,18 +1,16 @@
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from config import RAGConfig
+
+cfg = RAGConfig()
 
 def create_vector_store(chunks):
-    embedding_model = HuggingFaceEmbeddings(
-        model_name = "ALL-MiniLM-L6-v2"
-    
-    )
+    """Create (or overwrite) a Chroma vector store from document chunks."""
+    embedding_model = HuggingFaceEmbeddings(model_name=cfg.embedding_model)
 
     db = Chroma.from_documents(
-        chunks, 
-        embedding_model, 
-        persist_directory = "embeddings/"
-
+        chunks,
+        embedding_model,
+        persist_directory="embeddings/",
     )
-
-    db.persist()
-    return db 
+    return db
